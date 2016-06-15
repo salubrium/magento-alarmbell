@@ -21,6 +21,11 @@
 
 class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
 
+    // URL for the API call
+    static protected $geoUrl          = 'http://freegeoip.net/json/%s';
+    // CURL timeout in seconds
+    static protected $curlTimeout     = 10;
+
 	/**
      * Formats and logs a message through Magento's logging facility
      *
@@ -39,7 +44,11 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
         else { $adminusername = ''; }
 
         // construct log message, and log it
-        $logMessage = 'ALARMBELL ('. $remoteIp . ')';
+        $country = self::getGeoip($remoteIp);
+	    //$pageContent = file_get_contents('http://freegeoip.net/json/' . $remoteIp);
+	    //$parsedJson  = json_decode($pageContent);
+
+        $logMessage = 'ALARMBELL ('. $remoteIp . ' - ' . htmlspecialchars($country) . ') ';
         if (!empty($adminUsername)) { $logMessage .= " [$adminUsername]"; }
         $logMessage .= ': ' . $message;
         Mage::log($logMessage);
@@ -73,19 +82,65 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
 		        	$fromEmailAddress = Mage::getSingleton('admin/session')->getUser()->getEmail();
 		        }
 
-                Mage::log('Sending email from ' . $fromEmailAddress . ' to ' . $emailAddress);
-
-		        // send it
-	        	$mail = new Zend_Mail();
+			Mage::log('Sending email from ' . $fromEmailAddress . ' to ' . $emailAddress);
+			try {
+				// send it
+				$mail = new Zend_Mail();
 				$mail->setBodyText($message)
-			    ->setFrom($fromEmailAddress)
-			    ->addTo($emailAddress)
-			    ->setSubject($emailSubjectPrefix . ' ' . $subject)
-			    ->send();
-                return true;
-	        }
-	    }
+					->setFrom($fromEmailAddress)
+					->addTo($emailAddress)
+					->setSubject($emailSubjectPrefix . ' ' . $subject)
+					->send();
+				return true;
+			} catch (Exception $e) {
+				Mage::Log('ALARMBELL' . $e->getMessage());
+				return false;
+			}
+		}
+	}
     return false;
+    }
+
+
+    public function sendSlack($message, $logMessage)
+    {
+        $helper = Mage::helper('alarmbell/api');
+        try {
+            $icon = $data['icon_url'] = Mage::getBaseUrl('media') . 'nexcess/alarmbell' . Mage::getStoreConfig('alarmbell_options/general/icon');
+            $result = $helper->sendSlack(array('title' => $message, 'text'=>$logMessage, 'icon_url' => $data['icon_url'] = $icon));
+            Mage::Log($result);
+        } catch (Exception $e) {
+            $this->_getSession()->addError($e->getMessage());
+        }
+    }
+
+
+
+   /**
+    * Make the cURL call to the FreeGeoIP.net API
+    *
+    * @return null
+    */
+   static protected function getGeoip($ip = null)
+   {
+      // Construct the URL for the call
+      $curlURL = sprintf(self::$geoUrl,getenv($ip));
+      // Init curl
+      $ch = curl_init();
+      // Set the options for curl
+      curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);                  // Return the actual result
+      curl_setopt($ch,CURLOPT_URL,$curlURL);                      // Use the URL constructed previously
+      curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,self::$curlTimeout); // Set the timeout so we don't take forever to load the page
+      $data = curl_exec($ch);                                     // Execute the call
+      curl_close($ch);
+      // The call returns JSON, convert it to a stdClass object
+      $geo = json_decode($data);
+      if($geo){
+          return $geo->country_name;
+      } else {
+          return "Geoip Timeout";
+      }
+
     }
 
 }

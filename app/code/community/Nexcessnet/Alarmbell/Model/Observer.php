@@ -23,7 +23,11 @@ class Nexcessnet_Alarmbell_Model_Observer {
     public function logAdminUserSave($observer) {
         // only log if enabled via config
         $enabled = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_monitoring_enable');
-        if ($enabled == 1) {
+        $ignoreIps = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_ignore_ip');
+	    $remoteIp = Mage::helper('core/http')->getRemoteAddr();
+     	$ignore = explode(',',$ignoreIps);
+
+        if ($enabled == 1 && !in_array($remoteIp,$ignore)) {
             $adminUser = $observer->getEvent()->getObject();
             $message = '';
 
@@ -37,6 +41,9 @@ class Nexcessnet_Alarmbell_Model_Observer {
             }
             $logMessage = Mage::helper('alarmbell/data')->log($message);
             $emailAddress = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_email');
+            $logMessage = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_email_subject') . $logMessage;
+
+            Mage::helper('alarmbell/data')->sendSlack($message, $logMessage);
             Mage::helper('alarmbell/data')->email($logMessage, $emailSubject,$emailAddress);
         }
     }
@@ -49,6 +56,9 @@ class Nexcessnet_Alarmbell_Model_Observer {
             $message = "Admin user '" . $user_data['username'] . "' deleted";
             $logMessage = Mage::helper('alarmbell/data')->log($message);
             $emailAddress = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_email');
+            $logMessage = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_email_subject') . $logMessage;
+
+            Mage::helper('alarmbell/data')->sendSlack($message, $logMessage);
             Mage::helper('alarmbell/data')->email($logMessage, 'Admin user deleted', $emailAddress);
         }
     }
@@ -56,13 +66,19 @@ class Nexcessnet_Alarmbell_Model_Observer {
     public function logAdminUserLoginSuccess($observer) {
         // only log if enabled via config
         $enabled = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_login_monitoring_enable');
-        if ($enabled == 1) {
+        $ignoreIps = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_ignore_ip');
+	    $remoteIp = Mage::helper('core/http')->getRemoteAddr();
+	    $ignore = explode(',',$ignoreIps);
+        if ($enabled == 1 && !in_array($remoteIp,$ignore)) {
             $admin = Mage::getSingleton('admin/session')->getUser();
             if ($admin->getId()) {
                 $admin_username = $admin->getUsername();
                 $message = "Successful admin user log in";
                 $logMessage = Mage::helper('alarmbell/data')->log($message);
                 $emailAddress = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_login_monitoring_email');
+            	$logMessage = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_email_subject') . $logMessage;
+
+                Mage::helper('alarmbell/data')->sendSlack($message, $logMessage);
                 Mage::helper('alarmbell/data')->email($logMessage, $message, $emailAddress);
             }
         }
@@ -76,6 +92,9 @@ class Nexcessnet_Alarmbell_Model_Observer {
             $logMessage = Mage::helper('alarmbell/data')->log($message);
             $emailAddress = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_login_monitoring_email');
 
+            $logMessage = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_email_subject') . $logMessage;
+
+            Mage::helper('alarmbell/data')->sendSlack($message, $logMessage);
             Mage::helper('alarmbell/data')->email($logMessage, "Failed admin user login", $emailAddress);
         }
     }
