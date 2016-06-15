@@ -45,8 +45,6 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
 
         // construct log message, and log it
         $country = self::getGeoip($remoteIp);
-	    //$pageContent = file_get_contents('http://freegeoip.net/json/' . $remoteIp);
-	    //$parsedJson  = json_decode($pageContent);
 
         $logMessage = 'ALARMBELL ('. $remoteIp . ' - ' . htmlspecialchars($country) . ') ';
         if (!empty($adminUsername)) { $logMessage .= " [$adminUsername]"; }
@@ -82,7 +80,6 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
 		        	$fromEmailAddress = Mage::getSingleton('admin/session')->getUser()->getEmail();
 		        }
 
-			Mage::log('Sending email from ' . $fromEmailAddress . ' to ' . $emailAddress);
 			try {
 				// send it
 				$mail = new Zend_Mail();
