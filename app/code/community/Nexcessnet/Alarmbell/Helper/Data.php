@@ -22,7 +22,7 @@
 class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
 
     // URL for the API call
-    static protected $geoUrl          = 'http://freegeoip.net/json/%s';
+    static protected $geoUrl          = 'http://freegeoip.net/json/%';
     // CURL timeout in seconds
     static protected $curlTimeout     = 10;
 
@@ -121,7 +121,8 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
    static protected function getGeoip($ip = null)
    {
       // Construct the URL for the call
-      $curlURL = sprintf(self::$geoUrl,getenv($ip));
+      $curlURL = sprintf($geoUrl,$ip);
+	
       // Init curl
       $ch = curl_init();
       // Set the options for curl
