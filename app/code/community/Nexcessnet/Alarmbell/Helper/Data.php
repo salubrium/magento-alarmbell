@@ -121,7 +121,7 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
    static protected function getGeoip($ip = null)
    {
       // Construct the URL for the call
-      $curlURL = sprintf($geoUrl,$ip);
+      $curlURL = sprintf(self::$geoUrl,$ip);
 	
       // Init curl
       $ch = curl_init();
