@@ -22,7 +22,7 @@
 class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
 
     // URL for the API call
-    static protected $geoUrl          = 'http://freegeoip.net/json/%';
+    static protected $geoUrl          = 'http://freegeoip.net/json/%s';
     // CURL timeout in seconds
     static protected $curlTimeout     = 10;
 
