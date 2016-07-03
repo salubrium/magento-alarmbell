@@ -20,14 +20,18 @@
 
 class Nexcessnet_Alarmbell_Model_Observer {
 
+    public function isWhitelistedIp() {
+        $ignoreIps = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_ignore_ip');
+	    $remoteIp = Mage::helper('core/http')->getRemoteAddr();
+	    $ignore = explode(',',$ignoreIps);
+        
+        return in_array($remoteIp,$ignore);
+    }
+
     public function logAdminUserSave($observer) {
         // only log if enabled via config
         $enabled = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_monitoring_enable');
-        $ignoreIps = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_ignore_ip');
-	    $remoteIp = Mage::helper('core/http')->getRemoteAddr();
-     	$ignore = explode(',',$ignoreIps);
-
-        if ($enabled == 1 && !in_array($remoteIp,$ignore)) {
+        if ($enabled == 1) {
             $adminUser = $observer->getEvent()->getObject();
             $message = '';
 
@@ -66,10 +70,7 @@ class Nexcessnet_Alarmbell_Model_Observer {
     public function logAdminUserLoginSuccess($observer) {
         // only log if enabled via config
         $enabled = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_login_monitoring_enable');
-        $ignoreIps = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_ignore_ip');
-	    $remoteIp = Mage::helper('core/http')->getRemoteAddr();
-	    $ignore = explode(',',$ignoreIps);
-        if ($enabled == 1 && !in_array($remoteIp,$ignore)) {
+        if ($enabled == 1 && $this->isWhitelistedIp() == false) {
             $admin = Mage::getSingleton('admin/session')->getUser();
             if ($admin->getId()) {
                 $admin_username = $admin->getUsername();
@@ -87,7 +88,7 @@ class Nexcessnet_Alarmbell_Model_Observer {
     public function logAdminUserLoginFail($observer) {
         // only log if enabled via config
         $enabled = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_login_monitoring_enable');
-        if ($enabled == 1) {
+        if ($enabled == 1 && $this->isWhitelistedIp() == false) {
             $message = "Failed admin user login for '" . $observer->user_name . "'";
             $logMessage = Mage::helper('alarmbell/data')->log($message);
             $emailAddress = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_login_monitoring_email');
