@@ -18,6 +18,11 @@ of the user making the changes.
   * Can be enabled/disabled.
   * Can also be configured to send customized email alerts.
 
+## Additions to the Nexcess Version
+
+  * Slack notification support
+  * Whitelist Success and Failed logins by IP address
+  * Geoip Lookup in Login alerts
 
 ## Installation & Usage
 
