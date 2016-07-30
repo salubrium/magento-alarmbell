@@ -126,6 +126,28 @@
                                 <![CDATA[Ignore logins from these IP's (separate by a comma).]]>
                             </comment>                    
                         </alarmbell_admin_user_ignore_ip>
+                        <alarmbell_admin_geoip_country_deny>
+                            <label>Block these countries, do not alert:</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>160</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>
+                                <![CDATA[Block these countries, do not alert (separate by a comma).]]>
+                            </comment>                    
+                        </alarmbell_admin_geoip_country_deny>
+                        <alarmbell_admin_geoip_country_allow>
+                            <label>Allow ONLY these countries, overrides the deny:</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>160</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>
+                                <![CDATA[Only allow these countries access (separate by a comma).]]>
+                            </comment>                    
+                        </alarmbell_admin_geoip_country_allow>
                     </fields>
                 </admin_user_monitoring>
                 <general translate="label" module="alarmbell">

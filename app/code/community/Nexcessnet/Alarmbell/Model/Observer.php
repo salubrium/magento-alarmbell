@@ -20,6 +20,31 @@
 
 class Nexcessnet_Alarmbell_Model_Observer {
 
+    public function checkCountry() {
+        $countriesDenied = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_geoip_country_deny');
+        $countriesAllowed = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_geoip_country_allow');
+
+	$countriesAllowed = explode(',',$countriesAllowed);
+	$countriesDenied = explode(',',$countriesDenied);
+	$remoteIp = Mage::helper('core/http')->getRemoteAddr();
+        $country = Mage::helper('alarmbell/data')->getGeoip($remoteIp);
+        
+	if(in_array($country, $countriesAllowed)) {
+		return "permitted";
+	} elseif (!in_array($country, $countriesDenied)) {
+		return "permitted";
+	} elseif ($country == 'Geoip Timeout'){
+		return "permitted";
+	} else {
+		//Log to syslog for use by CSF/LFD or Fail2Ban
+		syslog(LOG_WARNING, $remoteIp);
+		$session = Mage::getSingleton('adminhtml/session'); 
+		$session->unsetAll();
+		$session->getCookie()->delete($session->getSessionName());
+		return "denied";
+	}
+    }
+
     public function isWhitelistedIp() {
         $ignoreIps = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_ignore_ip');
 	    $remoteIp = Mage::helper('core/http')->getRemoteAddr();
@@ -70,7 +95,8 @@ class Nexcessnet_Alarmbell_Model_Observer {
     public function logAdminUserLoginSuccess($observer) {
         // only log if enabled via config
         $enabled = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_login_monitoring_enable');
-        if ($enabled == 1 && $this->isWhitelistedIp() == false) {
+
+        if ($enabled == 1 && $this->isWhitelistedIp() == false && $this->checkCountry() == 'permitted') {
             $admin = Mage::getSingleton('admin/session')->getUser();
             if ($admin->getId()) {
                 $admin_username = $admin->getUsername();
@@ -88,7 +114,8 @@ class Nexcessnet_Alarmbell_Model_Observer {
     public function logAdminUserLoginFail($observer) {
         // only log if enabled via config
         $enabled = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_login_monitoring_enable');
-        if ($enabled == 1 && $this->isWhitelistedIp() == false) {
+
+        if ($enabled == 1 && $this->isWhitelistedIp() == false && $this->checkCountry() == 'permitted') {
             $message = "Failed admin user login for '" . $observer->user_name . "'";
             $logMessage = Mage::helper('alarmbell/data')->log($message);
             $emailAddress = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_user_login_monitoring_email');

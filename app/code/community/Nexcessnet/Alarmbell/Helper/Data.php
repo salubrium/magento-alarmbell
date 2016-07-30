@@ -51,8 +51,6 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
         $logMessage .= ': ' . $message;
         Mage::log($logMessage);
 
-        //$this->email($logMessage);
-
         return $logMessage;
     }
 
@@ -99,6 +97,11 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
     }
 
 
+   /**
+    * Send Slack request
+    *
+    * @return null
+    */
     public function sendSlack($message, $logMessage)
     {
         $helper = Mage::helper('alarmbell/api');
@@ -116,9 +119,9 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
    /**
     * Make the cURL call to the FreeGeoIP.net API
     *
-    * @return null
+    * @return country code
     */
-   static protected function getGeoip($ip = null)
+   public function getGeoip($ip = null)
    {
       // Construct the URL for the call
       $curlURL = sprintf(self::$geoUrl,$ip);
@@ -134,7 +137,7 @@ class Nexcessnet_Alarmbell_Helper_Data extends Mage_Core_Helper_Abstract {
       // The call returns JSON, convert it to a stdClass object
       $geo = json_decode($data);
       if($geo){
-          return $geo->country_name;
+          return $geo->country_code;
       } else {
           return "Geoip Timeout";
       }
