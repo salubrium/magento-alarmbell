@@ -24,25 +24,37 @@ class Nexcessnet_Alarmbell_Model_Observer {
         $countriesDenied = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_geoip_country_deny');
         $countriesAllowed = Mage::getStoreConfig('alarmbell_options/admin_user_monitoring/alarmbell_admin_geoip_country_allow');
 
-	$countriesAllowed = explode(',',$countriesAllowed);
-	$countriesDenied = explode(',',$countriesDenied);
-	$remoteIp = Mage::helper('core/http')->getRemoteAddr();
+        $countriesAllowed = explode(',',$countriesAllowed);
+        $countriesDenied = explode(',',$countriesDenied);
+        $remoteIp = Mage::helper('core/http')->getRemoteAddr();
         $country = Mage::helper('alarmbell/data')->getGeoip($remoteIp);
-        
-	if(in_array($country, $countriesAllowed)) {
-		return "permitted";
-	} elseif (!in_array($country, $countriesDenied)) {
-		return "permitted";
-	} elseif ($country == 'Geoip Timeout'){
-		return "permitted";
-	} else {
-		//Log to syslog for use by CSF/LFD or Fail2Ban
-		syslog(LOG_WARNING, $remoteIp);
-		$session = Mage::getSingleton('adminhtml/session'); 
-		$session->unsetAll();
-		$session->getCookie()->delete($session->getSessionName());
-		return "denied";
-	}
+
+        if($countriesAllowed != ''){
+            if(in_array($country, $countriesAllowed)) {
+                return "permitted";
+            } else {
+                syslog(LOG_WARNING, $remoteIp);
+                $session = Mage::getSingleton('adminhtml/session');
+                $session->unsetAll();
+                $session->getCookie()->delete($session->getSessionName());
+                return "denied";
+            }
+
+        } elseif (!in_array($country, $countriesDenied)) {
+            return "permitted";
+
+        } elseif ($country == 'Geoip Timeout'){
+            return "permitted";
+
+        } else {
+            //Log to syslog for use by CSF/LFD or Fail2Ban
+            syslog(LOG_WARNING, $remoteIp);
+            $session = Mage::getSingleton('adminhtml/session');
+            $session->unsetAll();
+            $session->getCookie()->delete($session->getSessionName());
+            return "denied";
+
+        }
     }
 
     public function isWhitelistedIp() {
